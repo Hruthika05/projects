@@ -6,7 +6,7 @@ import boto3
 
 app = Flask(__name__)
 
-OPENWEATHER_API_KEY = "bf77ad70479adb5c96802491b3c7e445"  # Replace with your key
+OPENWEATHER_API_KEY = "your-api-key"  # Replace with your key
 
 # AWS Polly setup
 try:
@@ -154,3 +154,4 @@ def plan_trip():
 
 if __name__ == "__main__":
     app.run(debug=True)
+

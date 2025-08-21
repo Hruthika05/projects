@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>🌍 Travel Planner</title>
+    <link rel="stylesheet" href="static/css/style.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet" />
+</head>
+<body>
+<div class="container">
+    <h1>🌍 Travel Planner</h1>
+    <div class="form-group">
+        <input type="text" id="start" placeholder="Enter Start Location" />
+        <input type="text" id="dest" placeholder="Enter Destination Location" />
+        <select id="lang"></select>
+        <select id="mode">
+            <option value="manual">Manual</option>
+            <option value="voice">Voice</option>
+        </select>
+        <button onclick="planTrip()">Plan Trip</button>
+    </div>
+    <div id="results"></div>
+</div>
+
+<script>
+    const langSelect = document.getElementById('lang');
+    const languages = {
+        "en":"English","zh-cn":"Chinese","es":"Spanish","fr":"French",
+        "hi":"Hindi","ja":"Japanese","de":"German","it":"Italian","ru":"Russian"
+    };
+    for (let code in languages) {
+        let opt = document.createElement('option');
+        opt.value = code;
+        opt.text = languages[code];
+        langSelect.add(opt);
+    }
+    let browserLang = navigator.language.toLowerCase();
+    if (languages[browserLang]) langSelect.value = browserLang;
+
+    // Translation dictionary for static UI labels
+    const uiTranslations = {
+        "en": {
+            distance_time: "📏 Distance & Time",
+            weather: "🌤 Weather",
+            traffic: "🚦 Traffic",
+            transport_options: "🚗 Transport Options",
+            recommendation: "📢 Recommendation",
+            summary: "📄 Summary",
+            transport_list: ["🚗 Car", "🚶‍♂️ Walk", "🚴‍♂️ Bike", "✈️ Plane"],
+            placeholder_start: "Enter Start Location",
+            placeholder_dest: "Enter Destination Location",
+            button_plan: "Plan Trip",
+            mode_labels: {"walk":"Walk", "bike":"Bike", "car":"Car", "plane":"Plane"},
+        },
+        "zh-cn": {
+            distance_time: "📏 距离和时间",
+            weather: "🌤 天气",
+            traffic: "🚦 交通状况",
+            transport_options: "🚗 交通方式",
+            recommendation: "📢 建议",
+            summary: "📄 摘要",
+            transport_list: ["🚗 汽车", "🚶‍♂️ 步行", "🚴‍♂️ 自行车", "✈️ 飞机"],
+            placeholder_start: "输入起点",
+            placeholder_dest: "输入目的地",
+            button_plan: "规划行程",
+            mode_labels: {"walk":"步行", "bike":"自行车", "car":"汽车", "plane":"飞机"},
+        },
+        "es": {
+            distance_time: "📏 Distancia y Tiempo",
+            weather: "🌤 Clima",
+            traffic: "🚦 Tráfico",
+            transport_options: "🚗 Opciones de Transporte",
+            recommendation: "📢 Recomendación",
+            summary: "📄 Resumen",
+            transport_list: ["🚗 Coche", "🚶‍♂️ Caminar", "🚴‍♂️ Bicicleta", "✈️ Avión"],
+            placeholder_start: "Ingrese lugar de inicio",
+            placeholder_dest: "Ingrese destino",
+            button_plan: "Planificar viaje",
+            mode_labels: {"walk":"Caminar", "bike":"Bicicleta", "car":"Coche", "plane":"Avión"},
+        },
+        "fr": {
+            distance_time: "📏 Distance & Temps",
+            weather: "🌤 Météo",
+            traffic: "🚦 Trafic",
+            transport_options: "🚗 Options de Transport",
+            recommendation: "📢 Recommandation",
+            summary: "📄 Résumé",
+            transport_list: ["🚗 Voiture", "🚶‍♂️ Marche", "🚴‍♂️ Vélo", "✈️ Avion"],
+            placeholder_start: "Entrez le lieu de départ",
+            placeholder_dest: "Entrez la destination",
+            button_plan: "Planifier le trajet",
+            mode_labels: {"walk":"Marche", "bike":"Vélo", "car":"Voiture", "plane":"Avion"},
+        },
+        "hi": {
+            distance_time: "📏 दूरी और समय",
+            weather: "🌤 मौसम",
+            traffic: "🚦 ट्रैफ़िक",
+            transport_options: "🚗 परिवहन विकल्प",
+            recommendation: "📢 सुझाव",
+            summary: "📄 सारांश",
+            transport_list: ["🚗 कार", "🚶‍♂️ पैदल", "🚴‍♂️ बाइक", "✈️ विमान"],
+            placeholder_start: "प्रारंभ स्थान दर्ज करें",
+            placeholder_dest: "गंतव्य दर्ज करें",
+            button_plan: "यात्रा योजना बनाएं",
+            mode_labels: {"walk":"पैदल", "bike":"बाइक", "car":"कार", "plane":"विमान"},
+        },
+        "ja": {
+            distance_time: "📏 距離と時間",
+            weather: "🌤 天気",
+            traffic: "🚦 交通",
+            transport_options: "🚗 交通手段",
+            recommendation: "📢 おすすめ",
+            summary: "📄 要約",
+            transport_list: ["🚗 車", "🚶‍♂️ 歩く", "🚴‍♂️ 自転車", "✈️ 飛行機"],
+            placeholder_start: "出発地を入力",
+            placeholder_dest: "目的地を入力",
+            button_plan: "旅行計画",
+            mode_labels: {"walk":"徒歩", "bike":"自転車", "car":"車", "plane":"飛行機"},
+        },
+        "de": {
+            distance_time: "📏 Entfernung & Zeit",
+            weather: "🌤 Wetter",
+            traffic: "🚦 Verkehr",
+            transport_options: "🚗 Transportmöglichkeiten",
+            recommendation: "📢 Empfehlung",
+            summary: "📄 Zusammenfassung",
+            transport_list: ["🚗 Auto", "🚶‍♂️ Zu Fuß", "🚴‍♂️ Fahrrad", "✈️ Flugzeug"],
+            placeholder_start: "Startort eingeben",
+            placeholder_dest: "Ziel eingeben",
+            button_plan: "Reise planen",
+            mode_labels: {"walk":"Zu Fuß", "bike":"Fahrrad", "car":"Auto", "plane":"Flugzeug"},
+        },
+        "it": {
+            distance_time: "📏 Distanza e Tempo",
+            weather: "🌤 Meteo",
+            traffic: "🚦 Traffico",
+            transport_options: "🚗 Opzioni di Trasporto",
+            recommendation: "📢 Raccomandazione",
+            summary: "📄 Sommario",
+            transport_list: ["🚗 Auto", "🚶‍♂️ A piedi", "🚴‍♂️ Bicicletta", "✈️ Aereo"],
+            placeholder_start: "Inserisci luogo di partenza",
+            placeholder_dest: "Inserisci destinazione",
+            button_plan: "Pianifica viaggio",
+            mode_labels: {"walk":"A piedi", "bike":"Bicicletta", "car":"Auto", "plane":"Aereo"},
+        },
+        "ru": {
+            distance_time: "📏 Расстояние и время",
+            weather: "🌤 Погода",
+            traffic: "🚦 Движение",
+            transport_options: "🚗 Варианты транспорта",
+            recommendation: "📢 Рекомендация",
+            summary: "📄 Итог",
+            transport_list: ["🚗 Автомобиль", "🚶‍♂️ Пешком", "🚴‍♂️ Велосипед", "✈️ Самолет"],
+            placeholder_start: "Введите начальное место",
+            placeholder_dest: "Введите пункт назначения",
+            button_plan: "Планировать поездку",
+            mode_labels: {"walk":"Пешком", "bike":"Велосипед", "car":"Автомобиль", "plane":"Самолет"},
+        }
+    };
+
+    // Speeds in km/h for each mode
+    const modeSpeeds = {
+        walk: 5,
+        bike: 15,
+        car: 60,
+        plane: 800
+    };
+
+    // Helper to format time nicely
+    function formatTime(hours) {
+        if (hours === 0 || isNaN(hours)) return "N/A";
+        if (hours < 1) {
+            const minutes = Math.round(hours * 60);
+            return minutes + " min";
+        } else {
+            return hours.toFixed(1) + " hr";
+        }
+    }
+
+    // Update placeholders and button text on language change
+    function updateUIStrings(lang) {
+        const trans = uiTranslations[lang] || uiTranslations['en'];
+        document.getElementById('start').placeholder = trans.placeholder_start;
+        document.getElementById('dest').placeholder = trans.placeholder_dest;
+        document.querySelector('button').textContent = trans.button_plan;
+    }
+
+    // Initially update placeholders/button
+    updateUIStrings(langSelect.value);
+
+    // Also update when language changes
+    langSelect.addEventListener('change', () => {
+        updateUIStrings(langSelect.value);
+    });
+
+    function planTrip(){
+        const start = document.getElementById('start').value;
+        const dest = document.getElementById('dest').value;
+        const lang = document.getElementById('lang').value;
+        const mode = document.getElementById('mode').value;
+        const trans = uiTranslations[lang] || uiTranslations['en'];
+
+        fetch('/plan', {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({start, dest, lang, mode})
+        })
+        .then(res=>res.json())
+        .then(data=>{
+            if(data.error){
+                document.getElementById('results').innerHTML = `<p style="color:red;">${data.error}</p>`;
+                return;
+            }
+
+            // distance in km (number)
+            const distance = data.distance || 0;
+
+            // Build transport options with estimated time
+            // Order: Walk, Bike, Car, Plane (to match UI order)
+            const transportModes = ["walk", "bike", "car", "plane"];
+            let transportHtml = "";
+            transportModes.forEach(m => {
+                const speed = modeSpeeds[m];
+                const timeHrs = distance / speed;
+                const formattedTime = formatTime(timeHrs);
+                // mode icon and label from transport_list and modeLabels
+                // We get icon from transport_list by index, label from mode_labels
+                // Map: walk=1, bike=2, car=0, plane=3 (based on transport_list order)
+                let icon = "";
+                switch(m){
+                    case "walk": icon = "🚶‍♂️"; break;
+                    case "bike": icon = "🚴‍♂️"; break;
+                    case "car": icon = "🚗"; break;
+                    case "plane": icon = "✈️"; break;
+                }
+                const label = trans.mode_labels[m] || m;
+
+                transportHtml += `<p>${icon} ${label} — ${formattedTime} (${distance} km)</p>`;
+            });
+
+            let html = `
+            <div class="card"><h3>${trans.distance_time}</h3>
+                <p>${data.distance} km, ${data.duration} min</p>
+            </div>
+            <div class="card"><h3>${trans.weather}</h3>
+                <p>${data.weather.conditions}</p>
+                <p>Temp: ${data.weather.temp}</p>
+                <p>Humidity: ${data.weather.humidity}</p>
+                <p>Wind: ${data.weather.wind}</p>
+            </div>
+            <div class="card"><h3>${trans.traffic}</h3>
+                <p>${data.traffic}</p>
+            </div>
+            <div class="card"><h3>${trans.transport_options}</h3>
+                ${transportHtml}
+            </div>
+            <div class="card recommendation"><h3>${trans.recommendation}</h3>
+                <p>${data.recommendation}</p>
+            </div>
+            <div class="card summary"><h3>${trans.summary}</h3>
+                <p>${data.output_text}</p>
+            </div>`;
+            document.getElementById('results').innerHTML = html;
+            if(data.audio_path){
+                new Audio(data.audio_path).play();
+            }
+        });
+    }
+</script>
+</body>
+</html>

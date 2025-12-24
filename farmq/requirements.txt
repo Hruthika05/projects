@@ -1,5 +1,10 @@
-pandas
-scikit-learn
-joblib
-nltk
 streamlit
+pandas
+numpy
+deep-translator
+google-search-results
+boto3
+sentence-transformers
+python-dotenv
+torch
+scikit-learn
